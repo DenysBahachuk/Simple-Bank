@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/DenysBahachuk/Simple_Bank/api"
@@ -20,6 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to connect to db:", err)
 	}
+
+	fmt.Println("successfully connected to db:", cfg.DBdriver)
 
 	store := db.NewStore(conn)
 	server := api.NewServer(store)

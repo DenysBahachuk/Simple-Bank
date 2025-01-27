@@ -2,16 +2,16 @@ run_postgres:
 	sudo docker run --name postgres12 -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminpassword -d postgres:16.
 
 create_db:
-	sudo docker exec -it postgres16 createdb --username=admin --owner=admin Simple_Bank
+	sudo docker exec -it postgres16 createdb --username=admin --owner=admin simple_bank
 
 drop_db:
-	sudo docker exec -it postgres16 dropdb --username=admin Simple_Bank
+	sudo docker exec -it postgres16 dropdb --username=admin simple_bank
 
 migrate_up:
-	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/Simple_Bank?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
 migrate_down:
-	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/Simple_Bank?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/simple_bank?sslmode=disable" -verbose down
 
 sqlc_generate:
 	sqlc generate
