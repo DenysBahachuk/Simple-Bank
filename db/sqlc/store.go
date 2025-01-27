@@ -6,19 +6,24 @@ import (
 	"fmt"
 )
 
-type Store struct {
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, args TransferTxParams) (TransferTxresult, error)
+}
+
+type SQLstore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLstore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
-func (s *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (s *SQLstore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -37,7 +42,7 @@ func (s *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	return tx.Commit()
 }
 
-type TransferTxparams struct {
+type TransferTxParams struct {
 	FromAccountID int64 `json:"from_account_id"`
 	ToAccountID   int64 `json:"to_account_id"`
 	Amount        int64 `json:"amount"`
@@ -53,7 +58,7 @@ type TransferTxresult struct {
 
 // TransferTx performs a money transfer from one acount to another
 // It creates a transfer record, adds account entries and updates account balance within a single database ransaction
-func (s *Store) TransferTx(ctx context.Context, args TransferTxparams) (TransferTxresult, error) {
+func (s *SQLstore) TransferTx(ctx context.Context, args TransferTxParams) (TransferTxresult, error) {
 	var result TransferTxresult
 
 	err := s.execTx(ctx, func(q *Queries) error {

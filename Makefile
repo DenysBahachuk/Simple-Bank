@@ -19,4 +19,13 @@ sqlc_generate:
 test:
 	go test -v -cover ./...
 
-.PHONY: run_postgres create_db drop_db migrate_up migrate_down sqlc_generate test
+server_run:
+	go run main.go
+
+gen-mocks:
+	mockgen -package mockdb -destination db/mock/store.go github.com/DenysBahachuk/Simple_Bank/db/sqlc Store
+
+gen-docs:
+	swag init -g server.go -d api,db/sqlc && swag fmt
+
+.PHONY: run_postgres create_db drop_db migrate_up migrate_down sqlc_generate test server_run gen-mocks gen-docs
