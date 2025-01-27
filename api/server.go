@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
 )
 
 //	@title			SimpleBank API
@@ -21,8 +22,6 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @BasePath					/v1
-//
 // @securityDefinitions.apikey	ApiKeyAuth
 // @in							header
 // @name						Authorization
@@ -31,10 +30,11 @@ import (
 type Server struct {
 	store  db.Store
 	router *gin.Engine
+	logger *zap.SugaredLogger
 }
 
-func NewServer(store db.Store) *Server {
-	server := Server{store: store}
+func NewServer(store db.Store, logger *zap.SugaredLogger) *Server {
+	server := Server{store: store, logger: logger}
 	router := gin.Default()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {

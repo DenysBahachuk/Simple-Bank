@@ -76,7 +76,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a post",
+                "description": "Creates an account",
                 "consumes": [
                     "application/json"
                 ],
@@ -86,7 +86,7 @@ const docTemplate = `{
                 "tags": [
                     "accounts"
                 ],
-                "summary": "Creates a post",
+                "summary": "Creates an account",
                 "parameters": [
                     {
                         "description": "Post payload",
@@ -357,7 +357,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "",
 	Host:             "",
-	BasePath:         "/v1",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "SimpleBank API",
 	Description:      "API for SmpleBank project",

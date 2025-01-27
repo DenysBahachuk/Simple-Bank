@@ -14,7 +14,6 @@
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         }
     },
-    "basePath": "/v1",
     "paths": {
         "/accounts": {
             "get": {
@@ -68,7 +67,7 @@
                 }
             },
             "post": {
-                "description": "Creates a post",
+                "description": "Creates an account",
                 "consumes": [
                     "application/json"
                 ],
@@ -78,7 +77,7 @@
                 "tags": [
                     "accounts"
                 ],
-                "summary": "Creates a post",
+                "summary": "Creates an account",
                 "parameters": [
                     {
                         "description": "Post payload",

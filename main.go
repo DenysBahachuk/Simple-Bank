@@ -2,33 +2,36 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 
 	"github.com/DenysBahachuk/Simple_Bank/api"
 	db "github.com/DenysBahachuk/Simple_Bank/db/sqlc"
 	"github.com/DenysBahachuk/Simple_Bank/utils"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
 	cfg, err := utils.LoadConfig(".")
 	if err != nil {
-		log.Fatal("cannot load config:", err)
+		logger.Fatal("cannot load config:", err)
 	}
+	logger.Info("config successfully loaded")
 
 	conn, err := sql.Open(cfg.DBdriver, cfg.DBsource)
 	if err != nil {
-		log.Fatal("unable to connect to db:", err)
+		logger.Fatal("unable to connect to db:", err)
 	}
 
-	fmt.Println("successfully connected to db:", cfg.DBdriver)
+	logger.Info("connection to db established:", cfg.DBdriver)
 
 	store := db.NewStore(conn)
-	server := api.NewServer(store)
+	server := api.NewServer(store, logger)
 
 	err = server.Start(cfg.ServerAddress)
 	if err != nil {
-		log.Fatal("cannot start the server:", err)
+		logger.Fatal("cannot start the server:", err)
 	}
 }
