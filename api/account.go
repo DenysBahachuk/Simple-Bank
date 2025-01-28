@@ -14,7 +14,7 @@ type createAccountRequest struct {
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
-// CreatePost godoc
+// CreateAccount godoc
 //
 //	@Summary	Creates an account
 //	@Schemes
@@ -22,9 +22,10 @@ type createAccountRequest struct {
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		createAccountRequest	true	"Post payload"
+//	@Param			payload	body		createAccountRequest	true	"Account payload"
 //	@Success		200		{object}	db.Account
 //	@Failure		400		{string}	error	"Bad request"
+//	@Failure		403		{string}	error	"Forbidden"
 //	@Failure		500		{string}	error	"Internal server error"
 //	@Router			/accounts [post]
 func (s *Server) createAccount(ctx *gin.Context) {
