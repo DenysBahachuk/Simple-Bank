@@ -28,10 +28,13 @@ func main() {
 	logger.Info("connection to db established:", cfg.DBdriver)
 
 	store := db.NewStore(conn)
-	server := api.NewServer(store, logger)
+	server, err := api.NewServer(store, logger, cfg)
+	if err != nil {
+		logger.Fatalf("failed to create server: %w", err)
+	}
 
 	err = server.Start(cfg.ServerAddress)
 	if err != nil {
-		logger.Fatal("cannot start the server:", err)
+		logger.Fatal("cannot start the server: %w", err)
 	}
 }

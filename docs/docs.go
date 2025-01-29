@@ -256,7 +256,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/db.User"
+                            "$ref": "#/definitions/api.userResponse"
                         }
                     },
                     "400": {
@@ -267,6 +267,58 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/login": {
+            "post": {
+                "description": "Authorizes the user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "User authorization",
+                "parameters": [
+                    {
+                        "description": "Login payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.loginUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.loginUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "type": "string"
                         }
@@ -321,6 +373,33 @@ const docTemplate = `{
                 }
             }
         },
+        "api.loginUserRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.loginUserResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "user_response": {
+                    "$ref": "#/definitions/api.userResponse"
+                }
+            }
+        },
         "api.transferRequest": {
             "type": "object",
             "required": [
@@ -343,6 +422,26 @@ const docTemplate = `{
                 "to_account_id": {
                     "type": "integer",
                     "minimum": 1
+                }
+            }
+        },
+        "api.userResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "password_changed_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -422,29 +521,6 @@ const docTemplate = `{
                 },
                 "transfer": {
                     "$ref": "#/definitions/db.Transfer"
-                }
-            }
-        },
-        "db.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "hashed_password": {
-                    "type": "string"
-                },
-                "password_changed_at": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
                 }
             }
         }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -17,12 +18,22 @@ type createUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 }
 
-type createUserResponse struct {
+type userResponse struct {
 	Username          string    `json:"username"`
 	FullName          string    `json:"full_name"`
 	Email             string    `json:"email"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
+}
+
+func newUserResponse(user db.User) userResponse {
+	return userResponse{
+		Username:          user.Username,
+		FullName:          user.FullName,
+		Email:             user.Email,
+		PasswordChangedAt: user.PasswordChangedAt,
+		CreatedAt:         user.CreatedAt,
+	}
 }
 
 // CreateUser godoc
@@ -34,7 +45,7 @@ type createUserResponse struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		createUserRequest	true	"User payload"
-//	@Success		200		{object}	db.User
+//	@Success		200		{object}	userResponse
 //	@Failure		400		{string}	error	"Bad request"
 //	@Failure		403		{string}	error	"Forbidden"
 //	@Failure		500		{string}	error	"Internal server error"
@@ -75,12 +86,68 @@ func (s *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	resp := createUserResponse{
-		Username:          user.Username,
-		FullName:          user.FullName,
-		Email:             user.Email,
-		PasswordChangedAt: user.PasswordChangedAt,
-		CreatedAt:         user.CreatedAt,
+	resp := newUserResponse(user)
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+type loginUserRequest struct {
+	Username string `json:"username" binding:"required,alphanum"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type loginUserResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        userResponse `json:"user_response"`
+}
+
+// LoginUser godoc
+//
+//	@Summary	User authorization
+//	@Schemes
+//	@Description	Authorizes the user
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		loginUserRequest	true	"Login payload"
+//	@Success		200		{object}	loginUserResponse
+//	@Failure		400		{string}	error	"Bad request"
+//	@Failure		401		{string}	error	"Unauthorized"
+//	@Failure		500		{string}	error	"Internal server error"
+//	@Router			/users/login [post]
+func (s *Server) loginUser(ctx *gin.Context) {
+	var req loginUserRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := s.store.GetUser(ctx, req.Username)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+		default:
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		}
+		return
+	}
+
+	if err := utils.CheckPassword(req.Password, user.HashedPassword); err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	accessToken, err := s.tokenMaker.CreateToken(req.Username, s.config.TokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	resp := loginUserResponse{
+		AccessToken: accessToken,
+		User:        newUserResponse(user),
 	}
 
 	ctx.JSON(http.StatusOK, resp)

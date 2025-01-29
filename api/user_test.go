@@ -182,7 +182,8 @@ func TestCreateUser(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := newTestServer(mockStore)
+			server, err := newTestServer(mockStore)
+			require.NoError(t, err)
 			recorder := httptest.NewRecorder()
 
 			// Marshal body data to JSON

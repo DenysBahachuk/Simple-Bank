@@ -26,6 +26,24 @@ definitions:
     - password
     - username
     type: object
+  api.loginUserRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  api.loginUserResponse:
+    properties:
+      access_token:
+        type: string
+      user_response:
+        $ref: '#/definitions/api.userResponse'
+    type: object
   api.transferRequest:
     properties:
       amount:
@@ -43,6 +61,19 @@ definitions:
     - currency
     - from_account_id
     - to_account_id
+    type: object
+  api.userResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      password_changed_at:
+        type: string
+      username:
+        type: string
     type: object
   db.Account:
     properties:
@@ -95,21 +126,6 @@ definitions:
         $ref: '#/definitions/db.Entry'
       transfer:
         $ref: '#/definitions/db.Transfer'
-    type: object
-  db.User:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      full_name:
-        type: string
-      hashed_password:
-        type: string
-      password_changed_at:
-        type: string
-      username:
-        type: string
     type: object
 info:
   contact:
@@ -275,7 +291,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/db.User'
+            $ref: '#/definitions/api.userResponse'
         "400":
           description: Bad request
           schema:
@@ -289,6 +305,40 @@ paths:
           schema:
             type: string
       summary: Creates a user
+      tags:
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authorizes the user
+      parameters:
+      - description: Login payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/api.loginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.loginUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: User authorization
       tags:
       - users
 securityDefinitions:
