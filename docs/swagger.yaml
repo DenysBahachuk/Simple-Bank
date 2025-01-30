@@ -3,11 +3,8 @@ definitions:
     properties:
       currency:
         type: string
-      owner:
-        type: string
     required:
     - currency
-    - owner
     type: object
   api.createUserRequest:
     properties:
@@ -170,6 +167,8 @@ paths:
           description: Internal server error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Fetches all accounts
       tags:
       - accounts
@@ -203,6 +202,8 @@ paths:
           description: Internal server error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Creates an account
       tags:
       - accounts
@@ -236,6 +237,8 @@ paths:
           description: Internal server error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Fetches an account
       tags:
       - accounts
@@ -270,6 +273,8 @@ paths:
           description: Internal server error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Creates a transfer
       tags:
       - transfer

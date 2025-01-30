@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	db "github.com/DenysBahachuk/Simple_Bank/db/sqlc"
+	"github.com/DenysBahachuk/Simple_Bank/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,6 +30,7 @@ type transferRequest struct {
 //	@Failure		400		{string}	error	"Bad request"
 //	@Failure		500		{string}	error	"Internal server error"
 //	@Failure		404		{string}	error	"Account not found"
+//	@Security		ApiKeyAuth
 //	@Router			/transfers [post]
 func (s *Server) createTransfer(ctx *gin.Context) {
 	var req transferRequest
@@ -39,11 +41,20 @@ func (s *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
-	if !s.validateAccount(ctx, req.FromAccountID, req.Currency) {
+	fromAccount, valid := s.validateAccount(ctx, req.FromAccountID, req.Currency)
+	if !valid {
 		return
 	}
 
-	if !s.validateAccount(ctx, req.ToAccountID, req.Currency) {
+	userPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+	if userPayload.Username != fromAccount.Owner {
+		err := fmt.Errorf("from account doesn't belong to the authorized user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	_, valid = s.validateAccount(ctx, req.ToAccountID, req.Currency)
+	if !valid {
 		return
 	}
 
@@ -62,23 +73,23 @@ func (s *Server) createTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result)
 }
 
-func (s *Server) validateAccount(ctx *gin.Context, accountID int64, currency string) bool {
+func (s *Server) validateAccount(ctx *gin.Context, accountID int64, currency string) (*db.Account, bool) {
 	account, err := s.store.GetAccount(ctx, accountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return nil, false
 		}
 
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return false
+		return nil, false
 	}
 
 	if account.Currency != currency {
 		err := fmt.Errorf("account [%d] currency mismatch: %s vs %s", accountID, account.Currency, currency)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return nil, false
 	}
 
-	return true
+	return &account, true
 }

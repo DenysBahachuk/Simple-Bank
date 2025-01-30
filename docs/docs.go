@@ -26,6 +26,11 @@ const docTemplate = `{
     "paths": {
         "/accounts": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Fetches all accounts",
                 "consumes": [
                     "application/json"
@@ -76,6 +81,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates an account",
                 "consumes": [
                     "application/json"
@@ -128,6 +138,11 @@ const docTemplate = `{
         },
         "/accounts/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Fetches an account by ID",
                 "consumes": [
                     "application/json"
@@ -178,6 +193,11 @@ const docTemplate = `{
         },
         "/transfers": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates a money transfer between two accounts",
                 "consumes": [
                     "application/json"
@@ -337,14 +357,10 @@ const docTemplate = `{
         "api.createAccountRequest": {
             "type": "object",
             "required": [
-                "currency",
-                "owner"
+                "currency"
             ],
             "properties": {
                 "currency": {
-                    "type": "string"
-                },
-                "owner": {
                     "type": "string"
                 }
             }

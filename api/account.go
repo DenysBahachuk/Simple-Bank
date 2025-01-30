@@ -2,15 +2,16 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	db "github.com/DenysBahachuk/Simple_Bank/db/sqlc"
+	"github.com/DenysBahachuk/Simple_Bank/token"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 )
 
 type createAccountRequest struct {
-	Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
@@ -27,6 +28,7 @@ type createAccountRequest struct {
 //	@Failure		400		{string}	error	"Bad request"
 //	@Failure		403		{string}	error	"Forbidden"
 //	@Failure		500		{string}	error	"Internal server error"
+//	@Security		ApiKeyAuth
 //	@Router			/accounts [post]
 func (s *Server) createAccount(ctx *gin.Context) {
 	var req createAccountRequest
@@ -37,8 +39,10 @@ func (s *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	userPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+
 	args := db.CreateAccountParams{
-		Owner:    req.Owner,
+		Owner:    userPayload.Username,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -77,6 +81,7 @@ type getAccountRequest struct {
 //	@Failure		400	{string}	error	"Bad request"
 //	@Failure		404	{string}	error	"Account not found"
 //	@Failure		500	{string}	error	"Internal server error"
+//	@Security		ApiKeyAuth
 //	@Router			/accounts/{id} [get]
 func (s *Server) getAccount(ctx *gin.Context) {
 	var req getAccountRequest
@@ -95,6 +100,13 @@ func (s *Server) getAccount(ctx *gin.Context) {
 		}
 
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	userPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+	if account.Owner != userPayload.Username {
+		err := fmt.Errorf("account doesn't belong to the authenticated user")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
@@ -118,6 +130,7 @@ type listAccountsRequest struct {
 //	@Success		200			{object}	[]db.Account
 //	@Failure		400			{string}	error	"Bad request"
 //	@Failure		500			{string}	error	"Internal server error"
+//	@Security		ApiKeyAuth
 //	@Router			/accounts [get]
 func (s *Server) listAccounts(ctx *gin.Context) {
 	var req listAccountsRequest
@@ -128,7 +141,10 @@ func (s *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
+	userPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+
 	args := db.ListAccountsParams{
+		Owner:  userPayload.Username,
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
