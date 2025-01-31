@@ -1,5 +1,5 @@
 run_postgres:
-	sudo docker run --name postgres12 -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminpassword -d postgres:16.
+	sudo docker run --name postgres16 --network bank-network -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminpassword -d postgres:16.
 
 create_db:
 	sudo docker exec -it postgres16 createdb --username=admin --owner=admin simple_bank
