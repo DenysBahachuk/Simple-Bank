@@ -1,3 +1,5 @@
+DB_URL=postgresql://admin:adminpassword@localhost:5432/simple_bank?sslmode=disable
+
 run_postgres:
 	sudo docker run --name postgres16 --network bank-network -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminpassword -d postgres:16.3
 
@@ -11,10 +13,10 @@ new_migration:
 	migrate create -ext sql -dir db/migration -seq $(name)
 
 migrate_up:
-	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/simple_bank?sslmode=disable" -verbose up
+	migrate -path db/migration -database "$(DB_URL)" -verbose up
 
 migrate_down:
-	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/simple_bank?sslmode=disable" -verbose down
+	migrate -path db/migration -database "$(DB_URL)" -verbose down
 
 sqlc_generate:
 	sqlc generate
@@ -31,4 +33,10 @@ gen-mocks:
 gen-docs:
 	swag init -g server.go -d api,db/sqlc && swag fmt
 
-.PHONY: run_postgres create_db drop_db migrate_up migrate_down sqlc_generate test server_run gen-mocks gen-docs new_migration
+db-docs:
+	dbdocs build ./doc/db.dbml
+
+db-schema:
+	dbml2sql --postgres -o doc/schema.sql doc/db.dbml
+
+.PHONY: run_postgres create_db drop_db migrate_up migrate_down sqlc_generate test server_run gen-mocks gen-docs new_migration db-docs db-schema
