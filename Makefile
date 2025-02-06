@@ -1,11 +1,14 @@
 run_postgres:
-	sudo docker run --name postgres16 --network bank-network -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminpassword -d postgres:16.
+	sudo docker run --name postgres16 --network bank-network -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminpassword -d postgres:16.3
 
 create_db:
 	sudo docker exec -it postgres16 createdb --username=admin --owner=admin simple_bank
 
 drop_db:
 	sudo docker exec -it postgres16 dropdb --username=admin simple_bank
+
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
 
 migrate_up:
 	migrate -path db/migration -database "postgresql://admin:adminpassword@localhost:5432/simple_bank?sslmode=disable" -verbose up
@@ -28,4 +31,4 @@ gen-mocks:
 gen-docs:
 	swag init -g server.go -d api,db/sqlc && swag fmt
 
-.PHONY: run_postgres create_db drop_db migrate_up migrate_down sqlc_generate test server_run gen-mocks gen-docs
+.PHONY: run_postgres create_db drop_db migrate_up migrate_down sqlc_generate test server_run gen-mocks gen-docs new_migration

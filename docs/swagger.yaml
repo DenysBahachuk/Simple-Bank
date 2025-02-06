@@ -38,8 +38,30 @@ definitions:
     properties:
       access_token:
         type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: string
+      session_id:
+        type: string
       user_response:
         $ref: '#/definitions/api.userResponse'
+    type: object
+  api.renewAccessTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  api.renewAccessTokenResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
     type: object
   api.transferRequest:
     properties:
@@ -242,6 +264,40 @@ paths:
       summary: Fetches an account
       tags:
       - accounts
+  /tokens/renew_access:
+    post:
+      consumes:
+      - application/json
+      description: Renew of the access token
+      parameters:
+      - description: Renew token payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/api.renewAccessTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.renewAccessTokenResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "401":
+          description: expired session
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Renew of the access token
+      tags:
+      - tokens
   /transfers:
     post:
       consumes:
