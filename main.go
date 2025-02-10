@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net"
+	"net/http"
 
 	"github.com/DenysBahachuk/Simple_Bank/api"
 	db "github.com/DenysBahachuk/Simple_Bank/db/sqlc"
 	"github.com/DenysBahachuk/Simple_Bank/gapi"
 	"github.com/DenysBahachuk/Simple_Bank/pb"
 	"github.com/DenysBahachuk/Simple_Bank/utils"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func main() {
@@ -35,7 +39,7 @@ func main() {
 	store := db.NewStore(conn)
 
 	//runGinServer(store, logger, cfg)
-
+	go runGatewayServer(store, logger, cfg)
 	runGrpcServer(store, logger, cfg)
 
 }
@@ -72,5 +76,43 @@ func runGrpcServer(store db.Store, logger *zap.SugaredLogger, cfg utils.Config) 
 	err = grpcServer.Serve(listener)
 	if err != nil {
 		logger.Fatalf("failed to start gRPC server: %w", err)
+	}
+}
+
+func runGatewayServer(store db.Store, logger *zap.SugaredLogger, cfg utils.Config) {
+	server, err := gapi.NewServer(store, cfg)
+	if err != nil {
+		logger.Fatalf("failed to create gRPC server: %w", err)
+	}
+
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	grpcMux := runtime.NewServeMux(jsonOption)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	err = pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		logger.Fatalf("failed to register handler server: %w", err)
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	listener, err := net.Listen("tcp", cfg.HTTPServerAddress)
+	if err != nil {
+		logger.Fatalf("failed to create HTTP listener: %w", err)
+	}
+
+	logger.Info("start HTTP gateway server at: ", cfg.HTTPServerAddress)
+	err = http.Serve(listener, mux)
+	if err != nil {
+		logger.Fatalf("failed to start HTTP gateway server: %w", err)
 	}
 }
